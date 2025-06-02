@@ -73,6 +73,43 @@
     <div class="spinner-border text-danger" role="status"></div>
     <p class="mt-3">Carregando estabelecimento...</p>
   </div>
+
+  <!-- Modal Deletar -->
+  <div
+    class="modal fade"
+    id="deleteModal"
+    tabindex="-1"
+    aria-labelledby="deleteModalLabel"
+    aria-hidden="true"
+    ref="deleteModalRef"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="deleteModalLabel">Confirmar Deleção</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Fechar"
+          ></button>
+        </div>
+        <div class="modal-body">
+          Tem certeza que deseja excluir
+          <strong>{{ establishment?.establishment_name }}</strong
+          >?
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button class="btn btn-danger" @click="deleteEstablishment">
+            Deletar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -84,6 +121,9 @@ import FieldEditor from "../components/FieldEditor.vue";
 const route = useRoute();
 const router = useRouter();
 const establishment = ref(null);
+
+const deleteModalRef = ref(null);
+let deleteModalInstance = null;
 
 onMounted(async () => {
   const id = route.params.id;
@@ -98,6 +138,10 @@ onMounted(async () => {
     if (!res.ok) throw new Error("Estabelecimento não encontrado");
 
     establishment.value = await res.json();
+
+    // Carrega Bootstrap dinamicamente e instancia o modal
+    const bootstrap = await import("bootstrap");
+    deleteModalInstance = new bootstrap.Modal(deleteModalRef.value);
   } catch (err) {
     console.error(err);
     alert("Erro ao carregar estabelecimento.");
@@ -129,13 +173,11 @@ const updateField = async ({ field, value }) => {
   }
 };
 
-const confirmDelete = async () => {
-  const confirmacao = confirm(
-    `Tem certeza que deseja deletar o estabelecimento "${establishment.value.establishment_name}"?`
-  );
+const confirmDelete = () => {
+  deleteModalInstance.show();
+};
 
-  if (!confirmacao) return;
-
+const deleteEstablishment = async () => {
   try {
     const res = await fetch(
       `http://localhost:8000/api/establishments/${establishment.value.id}/delete`,
@@ -149,6 +191,7 @@ const confirmDelete = async () => {
 
     if (!res.ok) throw new Error("Erro ao deletar");
 
+    deleteModalInstance.hide();
     alert("Estabelecimento deletado com sucesso!");
     router.push("/dashboard");
   } catch (err) {

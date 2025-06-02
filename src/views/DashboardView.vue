@@ -24,7 +24,11 @@
                   :to="`/establishments/${est.id}`"
                   class="text-decoration-none"
                 >
-                  {{ est.establishment_name }}
+                  {{
+                    est.establishment_name.length > 25
+                      ? est.establishment_name.slice(0, 25) + "..."
+                      : est.establishment_name
+                  }}
                 </router-link>
                 <div>
                   <button
