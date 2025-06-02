@@ -55,16 +55,16 @@
         />
         <hr />
         <p><strong>Dono(a): </strong> {{ establishment.owner.name }}</p>
-
-        <div class="d-flex gap-2 mt-4">
-          <button class="btn btn-outline-danger" @click="confirmDelete">
-            Deletar Estabelecimento
-          </button>
+        <div class="d-flex justify-content-between">
+          <router-link to="/dashboard" class="btn btn-secondary mt-3">
+            Voltar para o Dashboard
+          </router-link>
+          <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-outline-danger" @click="confirmDelete">
+              Deletar Estabelecimento
+            </button>
+          </div>
         </div>
-
-        <router-link to="/dashboard" class="btn btn-secondary mt-3">
-          Voltar para o Dashboard
-        </router-link>
       </div>
     </div>
   </div>

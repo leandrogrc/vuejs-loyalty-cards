@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
               to="/register"
               @click="closeNavbar"
             >
-              <i class="bi bi-sign-turn-right"></i> Register
+              <i class="bi bi-sign-turn-right"></i> Registar Conta
             </RouterLink>
           </li>
         </ul>

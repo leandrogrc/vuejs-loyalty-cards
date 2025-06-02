@@ -82,12 +82,15 @@
 
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 
 const name = ref("");
 const email = ref("");
 const password = ref("");
 const password_confirmation = ref("");
 const error = ref("");
+
+const router = useRouter();
 
 const handleSubmit = async () => {
   error.value = "";
@@ -107,7 +110,7 @@ const handleSubmit = async () => {
 
     // Armazene token e redirecione se necessário
     alert("Conta criada com sucesso!");
-    // router.push('/dashboard') se desejar redirecionar
+    router.push("/dashboard");
   } catch (err) {
     error.value = err.message;
   }

@@ -261,6 +261,74 @@
         </div>
       </div>
     </div>
+    <!-- Modal Criar Cliente -->
+    <div
+      class="modal fade"
+      id="clientModal"
+      tabindex="-1"
+      aria-labelledby="clientModalLabel"
+      aria-hidden="true"
+      ref="clientModalRef"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="clientModalLabel">Adicionar Cliente</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Fechar"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Estabelecimento</label>
+              <input
+                type="text"
+                class="form-control"
+                :value="selectedEstablishment?.establishment_name"
+                disabled
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Nome *</label>
+              <input
+                type="text"
+                v-model="newClient.name"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Telefone</label>
+              <input
+                type="text"
+                v-model="newClient.phone"
+                class="form-control"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input
+                type="email"
+                v-model="newClient.email"
+                class="form-control"
+              />
+            </div>
+            <p v-if="clientError" class="text-danger">{{ clientError }}</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button class="btn btn-primary" @click="createClient">
+              Criar Cliente
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -404,6 +472,7 @@ const deleteEstablishment = async () => {
     alert("Erro: " + err.message);
   }
 };
+
 const openLoyaltyModal = async (est) => {
   selectedEstablishment.value = est;
   selectedClientId.value = "";
@@ -426,6 +495,7 @@ const openLoyaltyModal = async (est) => {
     alert("Erro ao carregar clientes");
   }
 };
+
 const createLoyaltyCard = async () => {
   loyaltyError.value = "";
 
@@ -460,6 +530,70 @@ const createLoyaltyCard = async () => {
     alert("Cartão fidelidade criado com sucesso!");
   } catch (err) {
     loyaltyError.value = err.message;
+  }
+};
+// Refs para modal de cliente
+const clientModalRef = ref(null);
+let clientModalInstance = null;
+
+// Novo cliente
+const newClient = ref({
+  name: "",
+  email: "",
+  phone: "",
+});
+const clientError = ref("");
+
+onMounted(async () => {
+  // ...
+  const bootstrap = await import("bootstrap");
+  modalInstance = new bootstrap.Modal(modalRef.value);
+  deleteModalInstance = new bootstrap.Modal(deleteModalRef.value);
+  loyaltyModalInstance = new bootstrap.Modal(loyaltyModalRef.value);
+  clientModalInstance = new bootstrap.Modal(clientModalRef.value);
+});
+
+// Abrir modal de criar cliente
+const openCreateClientModal = (est) => {
+  selectedEstablishment.value = est;
+  newClient.value = { name: "", email: "", phone: "" };
+  clientError.value = "";
+  clientModalInstance.show();
+};
+
+// Criar cliente
+const createClient = async () => {
+  clientError.value = "";
+
+  if (!newClient.value.name.trim()) {
+    clientError.value = "O nome é obrigatório.";
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:8000/api/clients/create", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        establishment_id: selectedEstablishment.value.id,
+        name: newClient.value.name,
+        phone: newClient.value.phone || null,
+        email: newClient.value.email || null,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || "Erro ao criar cliente");
+    }
+
+    clientModalInstance.hide();
+    alert("Cliente criado com sucesso!");
+  } catch (err) {
+    clientError.value = err.message;
   }
 };
 </script>

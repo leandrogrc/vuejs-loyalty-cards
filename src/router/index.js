@@ -4,6 +4,7 @@ import LoginView from "../views/LoginView.vue";
 import RegisterView from "../views/RegisterView.vue";
 import DashboardView from "../views/DashboardView.vue";
 import EstablishmentView from "../views/EstablishmentView.vue";
+import ClientsView from "../views/ClientsView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,11 @@ const router = createRouter({
       path: "/establishments/:id",
       name: "establishments",
       component: EstablishmentView,
+    },
+    {
+      path: "/clients",
+      name: "clients",
+      component: ClientsView,
     },
   ],
 });
