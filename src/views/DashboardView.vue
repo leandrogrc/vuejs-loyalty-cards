@@ -16,33 +16,47 @@
 
             <ul class="list-group mt-2" v-if="establishments.length">
               <li
-                class="list-group-item d-flex justify-content-between align-items-center"
+                class="list-group-item"
                 v-for="est in establishments"
                 :key="est.id"
               >
-                <router-link
-                  :to="`/establishments/${est.id}`"
-                  class="text-decoration-none"
-                >
-                  {{
-                    est.establishment_name.length > 25
-                      ? est.establishment_name.slice(0, 25) + "..."
-                      : est.establishment_name
-                  }}
-                </router-link>
-                <div>
-                  <button
-                    class="btn btn-sm btn-outline-secondary me-2"
-                    @click="openEditModal(est)"
+                <div class="d-flex flex-column">
+                  <router-link
+                    :to="`/establishments/${est.id}`"
+                    class="text-decoration-none mb-2"
                   >
-                    Editar Nome
-                  </button>
-                  <button
-                    class="btn btn-sm btn-outline-danger"
-                    @click="confirmDelete(est)"
-                  >
-                    Deletar
-                  </button>
+                    {{
+                      est.establishment_name.length > 25
+                        ? est.establishment_name.slice(0, 25) + "..."
+                        : est.establishment_name
+                    }}
+                  </router-link>
+                  <div class="btn-group">
+                    <button
+                      class="btn btn-sm btn-outline-secondary"
+                      @click="openEditModal(est)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      @click="confirmDelete(est)"
+                    >
+                      Excluir
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-success"
+                      @click="openLoyaltyModal(est)"
+                    >
+                      + Cartão Fidelidade
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-primary"
+                      @click="openCreateClientModal(est)"
+                    >
+                      + Cliente
+                    </button>
+                  </div>
                 </div>
               </li>
             </ul>
@@ -51,7 +65,6 @@
 
             <hr />
 
-            <!-- Botão para abrir modal de criação -->
             <div class="mt-4">
               <button class="btn btn-danger" @click="openCreateModal">
                 Criar novo estabelecimento
@@ -148,6 +161,106 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Cartão Fidelidade -->
+    <div
+      class="modal fade"
+      id="loyaltyModal"
+      tabindex="-1"
+      aria-labelledby="loyaltyModalLabel"
+      aria-hidden="true"
+      ref="loyaltyModalRef"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title" id="loyaltyModalLabel">
+              Criar Cartão Fidelidade
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Fechar"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Estabelecimento</label>
+              <input
+                type="text"
+                class="form-control"
+                :value="selectedEstablishment?.establishment_name"
+                disabled
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Selecionar Cliente</label>
+              <select v-model="selectedClientId" class="form-select" required>
+                <option disabled value="">Selecione um cliente</option>
+                <option
+                  v-for="client in clients"
+                  :key="client.id"
+                  :value="client.id"
+                >
+                  {{ client.name }}
+                  {{ client.email ? `(${client.email})` : "" }}
+                </option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Visitas Pagas (inicial)</label>
+              <input
+                type="number"
+                v-model="paidVisits"
+                class="form-control"
+                min="0"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Total de Visitas Requeridas</label>
+              <input
+                type="number"
+                v-model="totalVisitsRequired"
+                class="form-control"
+                min="1"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Recompensas para Reivindicar</label>
+              <input
+                type="number"
+                v-model="rewardsToClaim"
+                class="form-control"
+                min="0"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Recompensas Reivindicadas</label>
+              <input
+                type="number"
+                v-model="rewardsClaimed"
+                class="form-control"
+                min="0"
+                required
+              />
+            </div>
+            <p v-if="loyaltyError" class="text-danger">{{ loyaltyError }}</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button class="btn btn-success" @click="createLoyaltyCard">
+              Criar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -166,9 +279,21 @@ const deleteTarget = ref(null);
 
 const modalRef = ref(null);
 const deleteModalRef = ref(null);
+const loyaltyModalRef = ref(null);
 
 let modalInstance = null;
 let deleteModalInstance = null;
+let loyaltyModalInstance = null;
+
+const clients = ref([]);
+const selectedEstablishment = ref(null);
+const selectedClientId = ref("");
+const loyaltyError = ref("");
+
+const paidVisits = ref(0);
+const totalVisitsRequired = ref(9);
+const rewardsToClaim = ref(0);
+const rewardsClaimed = ref(0);
 
 onMounted(async () => {
   if (!token.value) return router.push("/login");
@@ -186,6 +311,7 @@ onMounted(async () => {
     const bootstrap = await import("bootstrap");
     modalInstance = new bootstrap.Modal(modalRef.value);
     deleteModalInstance = new bootstrap.Modal(deleteModalRef.value);
+    loyaltyModalInstance = new bootstrap.Modal(loyaltyModalRef.value);
   } catch (err) {
     console.error(err);
     router.push("/login");
@@ -278,10 +404,62 @@ const deleteEstablishment = async () => {
     alert("Erro: " + err.message);
   }
 };
-</script>
+const openLoyaltyModal = async (est) => {
+  selectedEstablishment.value = est;
+  selectedClientId.value = "";
+  paidVisits.value = 0;
+  totalVisitsRequired.value = 9;
+  rewardsToClaim.value = 0;
+  rewardsClaimed.value = 0;
+  loyaltyError.value = "";
 
-<style scoped>
-.card {
-  border-top: 4px solid #dc3545;
-}
-</style>
+  try {
+    const res = await fetch("http://localhost:8000/api/clients", {
+      headers: { Authorization: `Bearer ${token.value}` },
+    });
+
+    if (!res.ok) throw new Error("Erro ao carregar clientes");
+    clients.value = await res.json();
+    loyaltyModalInstance.show();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao carregar clientes");
+  }
+};
+const createLoyaltyCard = async () => {
+  loyaltyError.value = "";
+
+  if (!selectedClientId.value) {
+    loyaltyError.value = "Selecione um cliente.";
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:8000/api/loyalty-cards/create", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        establishment_id: selectedEstablishment.value.id,
+        client_id: selectedClientId.value,
+        paid_visits: paidVisits.value,
+        total_visits_required: totalVisitsRequired.value,
+        rewards_to_claim: rewardsToClaim.value,
+        rewards_claimed: rewardsClaimed.value,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Erro ao criar cartão");
+    }
+
+    loyaltyModalInstance.hide();
+    alert("Cartão fidelidade criado com sucesso!");
+  } catch (err) {
+    loyaltyError.value = err.message;
+  }
+};
+</script>
